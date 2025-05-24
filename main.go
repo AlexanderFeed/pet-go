@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Todo struct {
@@ -15,88 +17,29 @@ type Todo struct {
 	Body      string `json:"body"`
 }
 
+var collection *mongo.Collection
+
 func main() {
-	fmt.Println("Hello Worlds")
-
-	app := fiber.New()
-
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		fmt.Println("Error loading .env file", err)
 	}
 
-	PORT := os.Getenv("PORT")
+	MONGODB_URI := os.Getenv("MONGODB_URI")
+	clientOpt := options.Client().ApplyURI(MONGODB_URI)
+	client, err := mongo.Connect(context.Background(), clientOpt)
 
-	todos := []Todo{}
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Status(200).JSON(fiber.Map{
-			"message": "Hello World",
-			"todos":   todos,
-		})
-	})
+	if err != nil {
+		log.Fatal("Error connecting to database", err)
+	}
 
-	app.Post("/api/todos", func(c *fiber.Ctx) error {
-		todo := &Todo{} //{id: 0, completed: false, body: ""}
-
-		if err := c.BodyParser(todo); err != nil {
-			return err
-		}
-
-		if todo.Body == "" {
-			return c.Status(400).JSON(fiber.Map{
-				"message": "Body cannot be empty",
-			})
-		}
-
-		todo.Id = len(todos) + 1
-		todos = append(todos, *todo)
-		return c.Status(200).JSON(fiber.Map{
-			"message": "Todo created",
-			"todo":    todo,
-		})
-	})
-
-	//update todo
-	app.Patch("/api/todos/:id", func(c *fiber.Ctx) error {
-		id, err := c.ParamsInt("id")
-		if err != nil {
-			return err
-		}
-		for i, todo := range todos {
-			if todo.Id == id {
-				todos[i].Completed = !todo.Completed
-				return c.Status(200).JSON(fiber.Map{
-					"message": "Todo updated",
-					"todo":    todo,
-				})
-			}
-		}
-		return c.Status(404).JSON(fiber.Map{
-			"message": "Todo not found",
-		})
-	})
-
-	//delete
-
-	app.Delete("/api/todos/:id", func(c *fiber.Ctx) error {
-		id, err := c.ParamsInt("id")
-		if err != nil {
-			return err
-		}
-		for i, todo := range todos {
-			if todo.Id == id {
-				todos = append(todos[:i], todos[i+1:]...)
-				return c.Status(200).JSON(fiber.Map{
-					"message": "Todo deleted",
-					"todo":    todo,
-				})
-			}
-		}
-		return c.Status(404).JSON(fiber.Map{
-			"message": "Todo not found",
-		})
-	})
-
-	log.Fatal(app.Listen(":" + PORT))
-
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Fatal("Error pinging to database", err)
+	}
+	fmt.Println("Connected to database")
+	fmt.Println(client)
+	fmt.Println(collection)
+	fmt.Println(clientOpt)
+	// collection = client.Database("todo").Collection("todo")
 }
