@@ -1,0 +1,42 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, build artifacts
+
+*.log
+
+# Go build files
+build/
+vendor/
+_obj
+_test
+
+# logs
+*.log
+
+# Environment variables
+.env
+node_modules
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Go specific files
+# Compiled binary for packages and commands
+/bin/
+
+*.out
+
